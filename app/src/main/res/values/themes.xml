@@ -1,0 +1,6 @@
+<resources>
+    <style name="Base.Theme.Atmoscope" parent="Theme.AppCompat.DayNight.NoActionBar">
+    </style>
+
+    <style name="Theme.Atmoscope" parent="Base.Theme.Atmoscope" />
+</resources>
