@@ -17,6 +17,12 @@ import com.example.atmoscope.ui.screens.SettingsScreen
 import com.example.atmoscope.ui.screens.SplashScreen
 import com.example.atmoscope.ui.theme.AtmoscopeTheme
 import com.example.atmoscope.viewmodel.WeatherViewModel
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.atmoscope.data.LoginRequest
+import com.example.atmoscope.data.RetrofitClient
+import kotlinx.coroutines.launch
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,17 +47,36 @@ class MainActivity : ComponentActivity() {
                         })
                     }
 
-                    // Baru: Halaman Login
                     composable("login") {
+                        val coroutineScope = rememberCoroutineScope()
+                        val context = LocalContext.current // Untuk menampilkan toast error/sukses
+
                         LoginScreen(
                             onLoginClick = { email, password ->
-                                // Sementara langsung arahkan ke main weather screen
-                                navController.navigate("main") {
-                                    popUpTo("login") { inclusive = true }
+                                // Menjalankan fungsi suspend di dalam Coroutine
+                                coroutineScope.launch {
+                                    try {
+                                        val response = RetrofitClient.instance.loginUser(LoginRequest(email, password))
+                                        if (response.isSuccessful && response.body()?.success == true) {
+                                            Toast.makeText(context, "Login Sukses!", Toast.LENGTH_SHORT).show()
+
+                                            // Pindah ke halaman utama cuaca jika berhasil
+                                            navController.navigate("main") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
+                                        } else {
+                                            // Tampilkan pesan gagal dari PHP (misal: password salah)
+                                            val errorMsg = response.body()?.message ?: "Login Gagal"
+                                            Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                                        }
+                                    } catch (e: Exception) {
+                                        // Menangani kendala koneksi / server mati
+                                        Toast.makeText(context, "Tidak dapat terhubung ke server: ${e.message}", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             },
                             onRegisterClick = {
-                                // TODO: Nanti tambahkan rute register di sini
+                                // Tempat navigasi register nanti
                             }
                         )
                     }
